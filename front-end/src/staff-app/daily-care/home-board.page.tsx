@@ -13,8 +13,7 @@ import { ActiveRollOverlay, ActiveRollAction } from "staff-app/components/active
 
 export const HomeBoardPage: React.FC = () => {
   const [isRollMode, setIsRollMode] = useState(false)
-  const [sortAsc, setSortAsc] = useState(true)
-  const [sortBy, setSortBy] = useState("first_name")
+  const [sortOptions, setSortOptions] = useState({ asc: true, byFirstName: true })
   const [studentList, setStudentList] = useState<Person[]>([])
   const [getStudents, data, loadState] = useApi<{ students: Person[] }>({ url: "get-homeboard-students" })
 
@@ -22,17 +21,20 @@ export const HomeBoardPage: React.FC = () => {
     void getStudents()
   }, [getStudents])
 
-  const onToolbarAction = (action: ToolbarAction) => {
-    if (action === "roll") {
-      setIsRollMode(true)
-    }
+  useEffect(() => {
+    console.log("data effect", data)
+    if (data && data.students !== studentList) setStudentList(sortStudents(data.students, sortOptions))
+  }, [data])
 
+  const onToolbarAction = (action: ToolbarAction, data?: any) => {
     switch (action) {
-      case "sort":
-        setSortAsc(!sortAsc)
+      case "roll":
+        setIsRollMode(true)
         break
-      case "sort-by":
-        setSortBy((sortBy) => (sortBy === "first_name" ? "last_name" : "first_name"))
+
+      case "sort":
+        setSortOptions(data)
+        setStudentList(sortStudents(studentList, data))
         break
     }
   }
@@ -43,44 +45,26 @@ export const HomeBoardPage: React.FC = () => {
     }
   }
 
-  const sortStudents = useCallback((list: Person[], asc: boolean, field: string) => {
+  const sortStudents = useCallback((list: Person[], sortOptions) => {
+    const { asc, byFirstName } = sortOptions
+
     const studentCompare = (a: Person, b: Person) => {
-      let af, bf
-      if (field === "first_name") {
-        af = a.first_name
-        bf = b.first_name
-      } else {
-        af = a.last_name
-        bf = b.last_name
-      }
-      const res = af.localeCompare(bf)
+      const _a = byFirstName ? a.first_name : a.last_name
+      const _b = byFirstName ? b.first_name : b.last_name
+
+      const res = _a.localeCompare(_b)
       return asc ? res : -res
     }
+
     list.sort(studentCompare)
     return [...list]
   }, [])
-
-  useEffect(() => {
-    console.log("data effect", data)
-    if (data && data.students !== studentList) {
-      const sortedData = sortStudents(data.students, sortAsc, sortBy)
-      setStudentList(sortedData)
-    }
-  }, [data])
-
-  useEffect(() => {
-    console.log("sort effect", [studentList, sortAsc, sortBy])
-    if (!studentList) return
-
-    const sortedList = sortStudents(studentList, sortAsc, sortBy)
-    setStudentList(sortedList)
-  }, [sortAsc, sortBy])
 
   console.log({ studentList })
   return (
     <>
       <S.PageContainer>
-        <Toolbar onItemClick={onToolbarAction} sortAsc={sortAsc} sortBy={sortBy} />
+        <Toolbar onItemClick={onToolbarAction} sortOptions={sortOptions} />
 
         {loadState === "loading" && (
           <CenteredContainer>
@@ -107,22 +91,22 @@ export const HomeBoardPage: React.FC = () => {
   )
 }
 
-type ToolbarAction = "roll" | "sort" | "sort-by"
+type ToolbarAction = "roll" | "sort"
 interface ToolbarProps {
-  onItemClick: (action: ToolbarAction, value?: string) => void
-  sortAsc: boolean
-  sortBy: string
+  onItemClick: (action: ToolbarAction, value?: any) => void
+  sortOptions: { asc: boolean; byFirstName: boolean }
 }
 const Toolbar: React.FC<ToolbarProps> = (props) => {
-  const { onItemClick, sortAsc, sortBy } = props
+  const { onItemClick, sortOptions } = props
+  const { asc, byFirstName } = sortOptions
   return (
     <S.ToolbarContainer>
       <div>
-        <span style={{ cursor: "pointer" }} onClick={() => onItemClick("sort-by")}>
-          {sortBy === "first_name" ? "First" : "Last"} Name
+        <span style={{ cursor: "pointer" }} onClick={() => onItemClick("sort", { asc, byFirstName: !byFirstName })}>
+          {byFirstName ? "First" : "Last"} Name
         </span>
-        <span style={{ cursor: "pointer", marginLeft: "10px" }} onClick={() => onItemClick("sort")}>
-          <FontAwesomeIcon icon={sortAsc ? faArrowUp : faArrowDown} />
+        <span style={{ cursor: "pointer", marginLeft: "10px" }} onClick={() => onItemClick("sort", { byFirstName, asc: !asc })}>
+          <FontAwesomeIcon icon={asc ? faArrowUp : faArrowDown} />
         </span>
       </div>
       <div>Search</div>
