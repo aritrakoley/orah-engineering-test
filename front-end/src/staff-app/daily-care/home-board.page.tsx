@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useEffect, useCallback, useContext } from "react"
 import styled from "styled-components"
 import Button from "@material-ui/core/ButtonBase"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
@@ -10,49 +10,40 @@ import { Person } from "shared/models/person"
 import { useApi } from "shared/hooks/use-api"
 import { StudentListTile } from "staff-app/components/student-list-tile/student-list-tile.component"
 import { ActiveRollOverlay, ActiveRollAction } from "staff-app/components/active-roll-overlay/active-roll-overlay.component"
+import { RollContext } from "staff-app/providers/RollProvider"
 
+type SortOptionsType = {
+  asc: boolean
+  byFirstName: boolean
+}
+type FilterOptionsType = {
+  name: string
+  attendance: string
+}
 export const HomeBoardPage: React.FC = () => {
-  const [isRollMode, setIsRollMode] = useState(false)
-  const [sortOptions, setSortOptions] = useState({ asc: true, byFirstName: true })
-  const [searchQuery, setSearchQuery] = useState("")
-  const [studentList, setStudentList] = useState<Person[]>([])
   const [getStudents, data, loadState] = useApi<{ students: Person[] }>({ url: "get-homeboard-students" })
+
+  const { state, dispatch } = useContext(RollContext)
 
   useEffect(() => {
     void getStudents()
   }, [getStudents])
 
   useEffect(() => {
-    if (data && data.students) setStudentList(updateList(data.students, sortOptions, searchQuery))
-  }, [data, sortOptions, searchQuery])
-
-  const onToolbarAction = (action: ToolbarAction, payload?: any) => {
-    switch (action) {
-      case "roll":
-        setIsRollMode(true)
-        break
-
-      case "sort":
-        setSortOptions(payload)
-        break
-
-      case "search":
-        setSearchQuery(payload)
-        break
-    }
-  }
+    if (data && data.students) dispatch({ type: "data", payload: updateList(data.students, state.sortOptions, state.filterOptions) })
+  }, [data, state.sortOptions, state.filterOptions])
 
   const onActiveRollAction = (action: ActiveRollAction) => {
     if (action === "exit") {
-      setIsRollMode(false)
+      dispatch({ type: "roll", payload: false })
     }
   }
 
   // Helpers -----------------
-  const sortStudents = useCallback((list: Person[], sortOptions) => {
+  const sortStudents = useCallback((list: any[], sortOptions: SortOptionsType) => {
     const { asc, byFirstName } = sortOptions
 
-    const studentCompare = (a: Person, b: Person) => {
+    const studentCompare = (a: any, b: any) => {
       const _a = byFirstName ? a.first_name : a.last_name
       const _b = byFirstName ? b.first_name : b.last_name
 
@@ -64,19 +55,21 @@ export const HomeBoardPage: React.FC = () => {
     return [...list]
   }, [])
 
-  const filterStudents = useCallback((list: Person[], query: string) => {
-    return list.filter((e) => `${e.first_name} ${e.last_name}`.toLowerCase().includes(query.toLowerCase()))
+  const filterStudents = useCallback((list: any[], filterOptions: FilterOptionsType) => {
+    const { name, attendance } = filterOptions
+    return list.filter((e) => `${e.first_name} ${e.last_name}`.toLowerCase().includes(name.toLowerCase()) && (!attendance || e.attendance === attendance))
   }, [])
 
-  const updateList = useCallback((list: any[], sortOptions: any, searchQuery: any) => {
-    return sortStudents(filterStudents(list, searchQuery), sortOptions)
+  const updateList = useCallback((list: any[], sortOptions: SortOptionsType, filterOptions: FilterOptionsType) => {
+    return sortStudents(filterStudents(list, filterOptions), sortOptions)
   }, [])
   //--------------------------
 
+  console.log(state)
   return (
     <>
       <S.PageContainer>
-        <Toolbar onItemClick={onToolbarAction} sortOptions={sortOptions} searchQuery={searchQuery} />
+        <Toolbar />
 
         {loadState === "loading" && (
           <CenteredContainer>
@@ -84,10 +77,10 @@ export const HomeBoardPage: React.FC = () => {
           </CenteredContainer>
         )}
 
-        {loadState === "loaded" && studentList && (
+        {loadState === "loaded" && state.studentList && (
           <>
-            {studentList.map((s) => (
-              <StudentListTile key={s.id} isRollMode={isRollMode} student={s} />
+            {state.studentList.map((s: any) => (
+              <StudentListTile key={s.id} isRollMode={state.isRollMode} student={s} />
             ))}
           </>
         )}
@@ -98,34 +91,27 @@ export const HomeBoardPage: React.FC = () => {
           </CenteredContainer>
         )}
       </S.PageContainer>
-      <ActiveRollOverlay isActive={isRollMode} onItemClick={onActiveRollAction} />
+      <ActiveRollOverlay isActive={state.isRollMode} onItemClick={onActiveRollAction} />
     </>
   )
 }
 
-type ToolbarAction = "roll" | "sort" | "search"
-interface ToolbarProps {
-  onItemClick: (action: ToolbarAction, value?: any) => void
-  sortOptions: { asc: boolean; byFirstName: boolean }
-  searchQuery: string
-}
-const Toolbar: React.FC<ToolbarProps> = (props) => {
-  const { onItemClick, sortOptions, searchQuery } = props
-  const { asc, byFirstName } = sortOptions
+const Toolbar: React.FC = () => {
+  const { state, dispatch } = useContext(RollContext)
   return (
     <S.ToolbarContainer>
       <div>
-        <span style={{ cursor: "pointer" }} onClick={() => onItemClick("sort", { asc, byFirstName: !byFirstName })}>
-          {byFirstName ? "First" : "Last"} Name
+        <span style={{ cursor: "pointer" }} onClick={() => dispatch({ type: "sort", payload: { byFirstName: !state.sortOptions.byFirstName } })}>
+          {state.sortOptions.byFirstName ? "First" : "Last"} Name
         </span>
-        <span style={{ cursor: "pointer", marginLeft: "10px" }} onClick={() => onItemClick("sort", { byFirstName, asc: !asc })}>
-          <FontAwesomeIcon icon={asc ? faArrowUp : faArrowDown} />
+        <span style={{ cursor: "pointer", marginLeft: "10px" }} onClick={() => dispatch({ type: "sort", payload: { asc: !state.sortOptions.asc } })}>
+          <FontAwesomeIcon icon={state.sortOptions.asc ? faArrowUp : faArrowDown} />
         </span>
       </div>
       <div>
-        <S.TextInput placeholder="Search" value={searchQuery} onChange={(e) => onItemClick("search", e.target.value)} />
+        <S.TextInput placeholder="Search" value={state.filterOptions.name} onChange={(e) => dispatch({ type: "search", payload: { name: e.target.value } })} />
       </div>
-      <S.Button onClick={() => onItemClick("roll")}>Start Roll</S.Button>
+      <S.Button onClick={() => dispatch({ type: "roll", payload: true })}>Start Roll</S.Button>
     </S.ToolbarContainer>
   )
 }
@@ -161,21 +147,3 @@ const S = {
     border: 2px solid transparent;
   `,
 }
-
-/* Notes:
-1. Reusing onItemClick to also detect onChange events on the input component:
-  a. To keep ToolBarActions handling in the same place
-  b. To keep code DRY
-  although this makes onItemClick a misleading function name
-
-2. Handling List updates
-Approach 1: Searching is significantly more frequent
-  Sort always sorts the entire list and stores it as state
-  Search filters the sorted list and displays it based on query
-
-Approach 2: Update the displayed list any time there's a change in data, sort or search parameters
-  Any time data, sortOptions or searchQuery is changed:
-  a. List is filtered by searchQuery
-  b. Smaller filtered list is then sorted
-  c. Updated list is displayed
-*/
