@@ -14,6 +14,7 @@ import { ActiveRollOverlay, ActiveRollAction } from "staff-app/components/active
 export const HomeBoardPage: React.FC = () => {
   const [isRollMode, setIsRollMode] = useState(false)
   const [sortOptions, setSortOptions] = useState({ asc: true, byFirstName: true })
+  const [searchQuery, setSearchQuery] = useState("")
   const [studentList, setStudentList] = useState<Person[]>([])
   const [getStudents, data, loadState] = useApi<{ students: Person[] }>({ url: "get-homeboard-students" })
 
@@ -22,19 +23,21 @@ export const HomeBoardPage: React.FC = () => {
   }, [getStudents])
 
   useEffect(() => {
-    console.log("data effect", data)
-    if (data && data.students !== studentList) setStudentList(sortStudents(data.students, sortOptions))
-  }, [data])
+    if (data && data.students) setStudentList(updateList(data.students, sortOptions, searchQuery))
+  }, [data, sortOptions, searchQuery])
 
-  const onToolbarAction = (action: ToolbarAction, data?: any) => {
+  const onToolbarAction = (action: ToolbarAction, payload?: any) => {
     switch (action) {
       case "roll":
         setIsRollMode(true)
         break
 
       case "sort":
-        setSortOptions(data)
-        setStudentList(sortStudents(studentList, data))
+        setSortOptions(payload)
+        break
+
+      case "search":
+        setSearchQuery(payload)
         break
     }
   }
@@ -45,6 +48,7 @@ export const HomeBoardPage: React.FC = () => {
     }
   }
 
+  // Helpers -----------------
   const sortStudents = useCallback((list: Person[], sortOptions) => {
     const { asc, byFirstName } = sortOptions
 
@@ -60,11 +64,19 @@ export const HomeBoardPage: React.FC = () => {
     return [...list]
   }, [])
 
-  console.log({ studentList })
+  const filterStudents = useCallback((list: Person[], query: string) => {
+    return list.filter((e) => `${e.first_name} ${e.last_name}`.toLowerCase().includes(query.toLowerCase()))
+  }, [])
+
+  const updateList = useCallback((list: any[], sortOptions: any, searchQuery: any) => {
+    return sortStudents(filterStudents(list, searchQuery), sortOptions)
+  }, [])
+  //--------------------------
+
   return (
     <>
       <S.PageContainer>
-        <Toolbar onItemClick={onToolbarAction} sortOptions={sortOptions} />
+        <Toolbar onItemClick={onToolbarAction} sortOptions={sortOptions} searchQuery={searchQuery} />
 
         {loadState === "loading" && (
           <CenteredContainer>
@@ -91,13 +103,14 @@ export const HomeBoardPage: React.FC = () => {
   )
 }
 
-type ToolbarAction = "roll" | "sort"
+type ToolbarAction = "roll" | "sort" | "search"
 interface ToolbarProps {
   onItemClick: (action: ToolbarAction, value?: any) => void
   sortOptions: { asc: boolean; byFirstName: boolean }
+  searchQuery: string
 }
 const Toolbar: React.FC<ToolbarProps> = (props) => {
-  const { onItemClick, sortOptions } = props
+  const { onItemClick, sortOptions, searchQuery } = props
   const { asc, byFirstName } = sortOptions
   return (
     <S.ToolbarContainer>
@@ -109,7 +122,9 @@ const Toolbar: React.FC<ToolbarProps> = (props) => {
           <FontAwesomeIcon icon={asc ? faArrowUp : faArrowDown} />
         </span>
       </div>
-      <div>Search</div>
+      <div>
+        <S.TextInput placeholder="Search" value={searchQuery} onChange={(e) => onItemClick("search", e.target.value)} />
+      </div>
       <S.Button onClick={() => onItemClick("roll")}>Start Roll</S.Button>
     </S.ToolbarContainer>
   )
@@ -139,4 +154,28 @@ const S = {
       border-radius: ${BorderRadius.default};
     }
   `,
+  TextInput: styled.input`
+    width: 100%;
+    padding: 5px;
+    border-radius: 5px;
+    border: 2px solid transparent;
+  `,
 }
+
+/* Notes:
+1. Reusing onItemClick to also detect onChange events on the input component:
+  a. To keep ToolBarActions handling in the same place
+  b. To keep code DRY
+  although this makes onItemClick a misleading function name
+
+2. Handling List updates
+Approach 1: Searching is significantly more frequent
+  Sort always sorts the entire list and stores it as state
+  Search filters the sorted list and displays it based on query
+
+Approach 2: Update the displayed list any time there's a change in data, sort or search parameters
+  Any time data, sortOptions or searchQuery is changed:
+  a. List is filtered by searchQuery
+  b. Smaller filtered list is then sorted
+  c. Updated list is displayed
+*/
