@@ -1,9 +1,19 @@
-import React from "react"
+import React, { useEffect } from "react"
 import styled from "styled-components"
 import { Spacing } from "shared/styles/styles"
+import { useApi } from "shared/hooks/use-api"
 
 export const ActivityPage: React.FC = () => {
-  return <S.Container>Activity Page</S.Container>
+  const [getActivities, data, loadState] = useApi({ url: "get-activities" })
+  useEffect(() => {
+    void getActivities()
+  }, [getActivities])
+
+  return (
+    <S.Container>
+      <pre>{JSON.stringify(data, null, 2)}</pre>
+    </S.Container>
+  )
 }
 
 const S = {
