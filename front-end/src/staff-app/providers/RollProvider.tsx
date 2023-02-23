@@ -62,7 +62,9 @@ const sortStudents = (list: any[], sortOptions: SortOptionsType) => {
 
 const filterStudents = (list: any[], filterOptions: FilterOptionsType) => {
   const { name, rollState } = filterOptions
-  return list.filter((e) => `${e.first_name} ${e.last_name}`.toLowerCase().includes(name.toLowerCase()) && (!rollState || e.rollState === rollState))
+  return list.filter(
+    (e) => `${e.first_name} ${e.last_name}`.toLowerCase().includes(name.toLowerCase()) && (!rollState || rollState.toString() === "all" || e.rollState === rollState)
+  )
 }
 
 const markAttendance = (list: any[], rollOptions: RollOptionsType) => {
@@ -72,7 +74,7 @@ const markAttendance = (list: any[], rollOptions: RollOptionsType) => {
 }
 
 const updateList = (list: any[], sortOptions: SortOptionsType, filterOptions: FilterOptionsType, rollOptions: RollOptionsType) => {
-  return markAttendance(sortStudents(filterStudents(list, filterOptions), sortOptions), rollOptions)
+  return filterStudents(markAttendance(sortStudents(list, sortOptions), rollOptions), filterOptions)
 }
 //--------------------------
 
@@ -107,10 +109,10 @@ const reducer = (state: any, action: { type: string; payload: any }) => {
 
     case "mark":
       state.rollOptions.rollMap.set(payload.id, payload.rollState)
-      const newList = state.studentList.map((s: any) => (s.id === payload.id ? { ...s, rollState: payload.rollState } : s))
+      // const newList = state.studentList.map((s: any) => (s.id === payload.id ? { ...s, rollState: payload.rollState } : s))
       return {
         ...state,
-        studentList: newList,
+        // studentList: newList,
       }
     default:
       return { ...state }

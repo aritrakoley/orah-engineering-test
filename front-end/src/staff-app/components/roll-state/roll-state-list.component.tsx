@@ -16,12 +16,14 @@ export const RollStateList: React.FC<Props> = ({ stateList, size = 14, onItemCli
   const onClick = (type: ItemType) => {
     if (onItemClick) {
       onItemClick(type)
+    } else {
+      dispatch({ type: "search", payload: { rollState: type } })
     }
   }
 
   const getRollSummary = (rollMap: Map<number, RolllStateType>) => {
     const summary = [
-      { type: "all", count: state.studentList.length },
+      { type: "all", count: state.rollOptions.rollMap.size },
       { type: "present", count: 0 },
       { type: "late", count: 0 },
       { type: "absent", count: 0 },
