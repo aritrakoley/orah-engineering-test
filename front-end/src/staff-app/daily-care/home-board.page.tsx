@@ -12,14 +12,6 @@ import { StudentListTile } from "staff-app/components/student-list-tile/student-
 import { ActiveRollOverlay, ActiveRollAction } from "staff-app/components/active-roll-overlay/active-roll-overlay.component"
 import { RollContext } from "staff-app/providers/RollProvider"
 
-type SortOptionsType = {
-  asc: boolean
-  byFirstName: boolean
-}
-type FilterOptionsType = {
-  name: string
-  attendance: string
-}
 export const HomeBoardPage: React.FC = () => {
   const [getStudents, data, loadState] = useApi<{ students: Person[] }>({ url: "get-homeboard-students" })
 
@@ -30,40 +22,14 @@ export const HomeBoardPage: React.FC = () => {
   }, [getStudents])
 
   useEffect(() => {
-    if (data && data.students) dispatch({ type: "data", payload: updateList(data.students, state.sortOptions, state.filterOptions) })
-  }, [data, state.sortOptions, state.filterOptions])
+    if (data && data.students) dispatch({ type: "update", payload: data.students })
+  }, [data, state.sortOptions, state.filterOptions, state.rollOptions])
 
   const onActiveRollAction = (action: ActiveRollAction) => {
     if (action === "exit") {
-      dispatch({ type: "roll", payload: false })
+      dispatch({ type: "roll", payload: { isRollMode: false } })
     }
   }
-
-  // Helpers -----------------
-  const sortStudents = useCallback((list: any[], sortOptions: SortOptionsType) => {
-    const { asc, byFirstName } = sortOptions
-
-    const studentCompare = (a: any, b: any) => {
-      const _a = byFirstName ? a.first_name : a.last_name
-      const _b = byFirstName ? b.first_name : b.last_name
-
-      const res = _a.localeCompare(_b)
-      return asc ? res : -res
-    }
-
-    list.sort(studentCompare)
-    return [...list]
-  }, [])
-
-  const filterStudents = useCallback((list: any[], filterOptions: FilterOptionsType) => {
-    const { name, attendance } = filterOptions
-    return list.filter((e) => `${e.first_name} ${e.last_name}`.toLowerCase().includes(name.toLowerCase()) && (!attendance || e.attendance === attendance))
-  }, [])
-
-  const updateList = useCallback((list: any[], sortOptions: SortOptionsType, filterOptions: FilterOptionsType) => {
-    return sortStudents(filterStudents(list, filterOptions), sortOptions)
-  }, [])
-  //--------------------------
 
   console.log(state)
   return (
@@ -80,7 +46,7 @@ export const HomeBoardPage: React.FC = () => {
         {loadState === "loaded" && state.studentList && (
           <>
             {state.studentList.map((s: any) => (
-              <StudentListTile key={s.id} isRollMode={state.isRollMode} student={s} />
+              <StudentListTile key={s.id} student={s} />
             ))}
           </>
         )}
@@ -91,7 +57,7 @@ export const HomeBoardPage: React.FC = () => {
           </CenteredContainer>
         )}
       </S.PageContainer>
-      <ActiveRollOverlay isActive={state.isRollMode} onItemClick={onActiveRollAction} />
+      <ActiveRollOverlay isActive={state.rollOptions.isRollMode} onItemClick={onActiveRollAction} />
     </>
   )
 }
@@ -111,7 +77,7 @@ const Toolbar: React.FC = () => {
       <div>
         <S.TextInput placeholder="Search" value={state.filterOptions.name} onChange={(e) => dispatch({ type: "search", payload: { name: e.target.value } })} />
       </div>
-      <S.Button onClick={() => dispatch({ type: "roll", payload: true })}>Start Roll</S.Button>
+      <S.Button onClick={() => dispatch({ type: "roll", payload: { isRollMode: true } })}>Start Roll</S.Button>
     </S.ToolbarContainer>
   )
 }
