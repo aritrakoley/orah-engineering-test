@@ -31,11 +31,11 @@ export const HomeBoardPage: React.FC = () => {
     setDisplayList(getListToDisplay(state.studentList, state.sortOptions, state.filterOptions))
   }, [state.studentList, state.sortOptions, state.filterOptions])
 
-  const onActiveRollAction = (action: ActiveRollAction) => {
-    if (action === "exit") {
-      dispatch({ type: "roll", payload: { isRollMode: false } })
-    }
-  }
+  // const onActiveRollAction = (action: ActiveRollAction) => {
+  //   if (action === "exit") {
+  //     dispatch({ type: "roll", payload: { isRollMode: false } })
+  //   }
+  // }
 
   console.log(state)
   return (
@@ -69,7 +69,7 @@ export const HomeBoardPage: React.FC = () => {
           </CenteredContainer>
         )}
       </S.PageContainer>
-      <ActiveRollOverlay isActive={state.isRollMode} onItemClick={onActiveRollAction} />
+      <ActiveRollOverlay isActive={state.isRollMode} /*onItemClick={onActiveRollAction}*/ />
     </>
   )
 }

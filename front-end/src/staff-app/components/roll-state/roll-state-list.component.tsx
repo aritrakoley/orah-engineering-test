@@ -1,36 +1,32 @@
-import React, { useContext } from "react"
+import React from "react"
 import styled from "styled-components"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { RollStateIcon } from "staff-app/components/roll-state/roll-state-icon.component"
 import { Spacing, FontWeight } from "shared/styles/styles"
-import { Roll, RolllStateType } from "shared/models/roll"
-import { RollContext } from "staff-app/providers/RollProvider"
-import { getRollSummary } from "staff-app/providers/utils"
+import { RolllStateType } from "shared/models/roll"
+import { ItemType, StateList } from "staff-app/providers/utils"
 
 interface Props {
+  stateList: StateList[]
   onItemClick?: (type: ItemType) => void
   size?: number
 }
-export const RollStateList: React.FC<Props> = ({ size = 14, onItemClick }) => {
-  const { state, dispatch } = useContext(RollContext)
+export const RollStateList: React.FC<Props> = ({ stateList, size = 14, onItemClick }) => {
   const onClick = (type: ItemType) => {
     if (onItemClick) {
       onItemClick(type)
-    } else {
-      dispatch({ type: "search", payload: { rollState: type } })
     }
   }
 
-  const summary = getRollSummary(state.studentList)
   return (
     <S.ListContainer>
-      {summary.map((s, i) => {
+      {stateList.map((s, i) => {
         if (s.type === "all") {
           return (
             <S.ListItem key={i}>
               <FontAwesomeIcon icon="users" size="sm" style={{ cursor: "pointer" }} onClick={() => onClick(s.type as RolllStateType)} />
               <span>
-                {summary[1].count + summary[2].count + summary[3].count} / {s.count}
+                {stateList[1].count + stateList[2].count + stateList[3].count} / {s.count}
               </span>
             </S.ListItem>
           )
@@ -63,10 +59,3 @@ const S = {
     }
   `,
 }
-
-interface StateList {
-  type: ItemType
-  count: number
-}
-
-type ItemType = RolllStateType | "all"

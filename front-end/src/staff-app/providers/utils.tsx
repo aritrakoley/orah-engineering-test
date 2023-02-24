@@ -1,4 +1,5 @@
 import { Person } from "shared/models/person"
+import { RolllStateType } from "shared/models/roll"
 
 export type SortOptionsType = {
   asc: boolean
@@ -9,6 +10,13 @@ export type FilterOptionsType = {
   name: string
   rollState: string
 }
+
+export interface StateList {
+  type: ItemType
+  count: number
+}
+
+export type ItemType = RolllStateType | "all"
 
 const sortStudents = (list: Person[], sortOptions: SortOptionsType) => {
   const { asc, byFirstName } = sortOptions

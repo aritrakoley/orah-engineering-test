@@ -6,18 +6,20 @@ import { RollStateList } from "staff-app/components/roll-state/roll-state-list.c
 import { useApi } from "shared/hooks/use-api"
 import { RollContext } from "staff-app/providers/RollProvider"
 import { RolllStateType } from "shared/models/roll"
+import { StateList, getRollSummary } from "staff-app/providers/utils"
 
 export type ActiveRollAction = "filter" | "exit"
 interface Props {
-  isActive: boolean
-  onItemClick: (action: ActiveRollAction, value?: string) => void
+  isActive?: boolean
+  onItemClick?: (action: ActiveRollAction, value?: string) => void
 }
 
-export const ActiveRollOverlay: React.FC<Props> = (props) => {
-  const { isActive, onItemClick } = props
+export const ActiveRollOverlay: React.FC<Props> = () => {
   const [saveRoll, rollData, loadState] = useApi({ url: "save-roll" })
 
-  const { state } = useContext(RollContext)
+  const { state, dispatch } = useContext(RollContext)
+
+  const closeOverlay = () => dispatch({ type: "roll", payload: false })
 
   const handleComplete = () => {
     const student_roll_states: { student_id: number; roll_state: RolllStateType }[] = []
@@ -26,20 +28,21 @@ export const ActiveRollOverlay: React.FC<Props> = (props) => {
     }
 
     saveRoll({ student_roll_states })
-    onItemClick("exit")
+    closeOverlay()
   }
 
+  const summary = getRollSummary(state.studentList) as StateList[]
   return (
-    <S.Overlay isActive={isActive}>
+    <S.Overlay isActive={state.isRollMode}>
       <S.Content>
         <div>Class Attendance</div>
         <div>
-          <RollStateList />
+          <RollStateList stateList={summary} onItemClick={(type) => dispatch({ type: "search", payload: { rollState: type } })} />
           <div style={{ marginTop: Spacing.u6 }}>
-            <Button color="inherit" onClick={() => onItemClick("exit")}>
+            <Button color="inherit" onClick={closeOverlay}>
               Exit
             </Button>
-            <Button color="inherit" style={{ marginLeft: Spacing.u2 }} onClick={() => handleComplete()}>
+            <Button color="inherit" style={{ marginLeft: Spacing.u2 }} onClick={handleComplete}>
               Complete
             </Button>
           </div>
