@@ -5,6 +5,7 @@ import { SortOptionsType, FilterOptionsType } from "./utils"
 
 const initialState: StateType = {
   studentList: [],
+  isRollMode: false,
   sortOptions: {
     asc: true,
     byFirstName: true,
@@ -14,18 +15,17 @@ const initialState: StateType = {
     rollState: "",
   },
   rollOptions: {
-    isRollMode: false,
     rollMap: new Map(),
   },
 }
 
 type RollOptionsType = {
-  isRollMode: boolean
   rollMap: Map<number, RolllStateType>
 }
 
 type StateType = {
   studentList: Person[]
+  isRollMode: boolean
   sortOptions: SortOptionsType
   filterOptions: FilterOptionsType
   rollOptions: RollOptionsType
@@ -59,11 +59,11 @@ type ContextType = {
 //   )
 // }
 
-const markAttendance = (list: any[], rollOptions: RollOptionsType) => {
-  const { isRollMode, rollMap } = rollOptions
-  if (!isRollMode || !rollMap.size) return list
-  return list.map((e) => ({ ...e, rollState: rollMap.get(e.id) }))
-}
+// const markAttendance = (list: any[], rollOptions: RollOptionsType) => {
+//   const { rollMap } = rollOptions
+//   if (!isRollMode || !rollMap.size) return list
+//   return list.map((e) => ({ ...e, rollState: rollMap.get(e.id) }))
+// }
 
 // const updateList = (list: any[], sortOptions: SortOptionsType, filterOptions: FilterOptionsType, rollOptions: RollOptionsType) => {
 //   return filterStudents(markAttendance(sortStudents(list, sortOptions), rollOptions), filterOptions)
@@ -100,16 +100,16 @@ const reducer = (state: any, action: { type: string; payload: any }) => {
       console.log("roll")
       return {
         ...state,
-        rollOptions: { ...state.rollOptions, ...payload },
+        isRollMode: payload,
       }
 
     case "mark":
       console.log("mark")
-      state.rollOptions.rollMap.set(payload.id, payload.rollState)
-      // const newList = state.studentList.map((s: any) => (s.id === payload.id ? { ...s, rollState: payload.rollState } : s))
+      // state.rollOptions.rollMap.set(payload.id, payload.rollState)
+      const newList = state.studentList.map((s: Person) => (s.id === payload.id ? { ...s, rollState: payload.rollState } : s))
       return {
         ...state,
-        // studentList: newList,
+        studentList: newList,
       }
     default:
       return { ...state }

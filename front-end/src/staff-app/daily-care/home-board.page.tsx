@@ -69,7 +69,7 @@ export const HomeBoardPage: React.FC = () => {
           </CenteredContainer>
         )}
       </S.PageContainer>
-      <ActiveRollOverlay isActive={state.rollOptions.isRollMode} onItemClick={onActiveRollAction} />
+      <ActiveRollOverlay isActive={state.isRollMode} onItemClick={onActiveRollAction} />
     </>
   )
 }
@@ -89,7 +89,7 @@ const Toolbar: React.FC = () => {
       <div>
         <S.TextInput placeholder="Search" value={state.filterOptions.name} onChange={(e) => dispatch({ type: "search", payload: { name: e.target.value } })} />
       </div>
-      <S.Button onClick={() => dispatch({ type: "roll", payload: { isRollMode: true } })}>Start Roll</S.Button>
+      <S.Button onClick={() => dispatch({ type: "roll", payload: true })}>Start Roll</S.Button>
     </S.ToolbarContainer>
   )
 }
