@@ -33,7 +33,7 @@ const sortStudents = (list: Person[], sortOptions: SortOptionsType) => {
   return [...list]
 }
 
-const filterStudents = (list: Person[], filterOptions: FilterOptionsType) => {
+export const filterStudents = (list: Person[], filterOptions: FilterOptionsType) => {
   const { name, rollState } = filterOptions
   return list.filter(
     (e) => `${e.first_name} ${e.last_name}`.toLowerCase().includes(name.toLowerCase()) && (!rollState || rollState.toString() === "all" || e.rollState === rollState)
@@ -65,14 +65,16 @@ export const getRollSummary = (list: Person[]) => {
         break
     }
   }
-  return summary
+  return summary as StateList[]
 }
 
 export const markAttendance = (list: Person[], roll: any[]) => {
-  return list
+  // return list
   const rollMap = new Map()
-  // for (const s of roll )
-  //   rollMap.set(s.student_id)
+  for (const s of roll) rollMap.set(s.student_id, s.roll_state)
+  console.log(rollMap)
+
+  return list.map((s) => ({ ...s, rollState: rollMap.get(s.id) }))
 }
 
 export const toTitleCase = (s: string) => s[0].toUpperCase() + s.slice(1)

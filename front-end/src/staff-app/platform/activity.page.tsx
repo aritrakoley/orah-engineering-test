@@ -8,8 +8,9 @@ import Button from "@material-ui/core/ButtonBase"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { CenteredContainer } from "shared/components/centered-container/centered-container.component"
 import { RollStateList } from "staff-app/components/roll-state/roll-state-list.component"
-import { markAttendance, toTitleCase } from "staff-app/providers/utils"
+import { filterStudents, getRollSummary, ItemType, markAttendance, toTitleCase } from "staff-app/providers/utils"
 import { Person } from "shared/models/person"
+import { StudentListTile } from "staff-app/components/student-list-tile/student-list-tile.component"
 
 export const ActivityPage: React.FC = () => {
   const [getActivities, data, loadState] = useApi<{ activity: any[] }>({ url: "get-activities" })
@@ -113,52 +114,46 @@ type Props = {
 const Modal: React.FC<Props> = ({ data, onClose }) => {
   const [getStudents, list, loadState] = useApi<{ students: Person[] }>({ url: "get-homeboard-students" })
 
+  const [filter, setFilter] = useState<ItemType>("all")
+  const [processedData, setProcessedData] = useState<any>()
+
   useEffect(() => {
     if (data.header === "attendance") getStudents()
   }, [getStudents])
+
+  useEffect(() => {
+    processData(data)
+  }, [list])
 
   const processData = (data: any) => {
     switch (data.header) {
       case "attendance":
         if (loadState === "loaded" && list) {
           const markedData = markAttendance(list.students, data.rollData)
+          setProcessedData({ ...data, rollData: markedData })
         }
     }
   }
+  const onIconClick = (type: ItemType) => {
+    setFilter(type)
+  }
 
+  const filteredData = { ...processedData, rollData: processedData ? filterStudents(processedData.rollData, { name: "", rollState: filter }) : undefined }
+  const stateList = processedData ? getRollSummary(processedData.rollData) : []
   return (
     <S.Modal>
       <S.ModalContainer>
         <S.ModalHeader>
           <S.ModalTitle>{toTitleCase(data.header)}</S.ModalTitle>
-          {data.header === "attendance" && loadState === "loaded" ? (
-            <RollStateList
-              stateList={[
-                { type: "all", count: 0 },
-                { type: "present", count: 0 },
-                { type: "late", count: 0 },
-                { type: "absent", count: 0 },
-              ]}
-              onItemClick={() => console.log("item-click")}
-            />
-          ) : null}
+          {processedData && processedData.header === "attendance" && loadState === "loaded" ? <RollStateList stateList={stateList} onItemClick={onIconClick} /> : null}
           <S.ModalCloseButton onClick={onClose}>
             <FontAwesomeIcon icon={faWindowClose} />
           </S.ModalCloseButton>
         </S.ModalHeader>
-        {data.header === "attendance" && loadState === "loaded" ? (
+        {filteredData && filteredData.header === "attendance" && loadState === "loaded" ? (
           <>
-            <S.RollItem>
-              <S.RollItemId type={"header"}>ID</S.RollItemId>
-              <S.RollItemState state={"header"}>State</S.RollItemState>
-            </S.RollItem>
-            <div style={{ overflowY: "auto" }}>
-              {data.rollData.map((e: any) => (
-                <S.RollItem>
-                  <S.RollItemId type={"item"}>{e.student_id}</S.RollItemId>
-                  <S.RollItemState state={e.roll_state}>{e.roll_state[0].toUpperCase() + e.roll_state.slice(1)}</S.RollItemState>
-                </S.RollItem>
-              ))}
+            <div style={{ width: "90%", overflowY: "auto", padding: "10px" }}>
+              {filteredData && filteredData.rollData.map((s: any) => <StudentListTile key={s.id} student={s} readOnly />)}
             </div>
           </>
         ) : (
@@ -303,12 +298,11 @@ const S = {
   `,
   ModalContainer: styled.div`
     display: flex;
+    flex-direction: column;
     align-items: center;
     width: 40%;
-    min-height: 10rem;
-    max-height: 25rem;
+    height: 25rem;
     overflow-y: auto;
-    flex-direction: column;
     border-radius: 10px;
     background-color: #fff;
   `,
