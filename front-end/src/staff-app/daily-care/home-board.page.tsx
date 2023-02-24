@@ -9,7 +9,7 @@ import { CenteredContainer } from "shared/components/centered-container/centered
 import { Person } from "shared/models/person"
 import { useApi } from "shared/hooks/use-api"
 import { StudentListTile } from "staff-app/components/student-list-tile/student-list-tile.component"
-import { ActiveRollOverlay, ActiveRollAction } from "staff-app/components/active-roll-overlay/active-roll-overlay.component"
+import { ActiveRollOverlay /*ActiveRollAction*/ } from "staff-app/components/active-roll-overlay/active-roll-overlay.component"
 import { RollContext } from "staff-app/providers/RollProvider"
 import { getListToDisplay } from "../providers/utils"
 

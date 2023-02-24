@@ -7,6 +7,9 @@ import { Spacing, BorderRadius, FontWeight } from "shared/styles/styles"
 import Button from "@material-ui/core/ButtonBase"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { CenteredContainer } from "shared/components/centered-container/centered-container.component"
+import { RollStateList } from "staff-app/components/roll-state/roll-state-list.component"
+import { markAttendance, toTitleCase } from "staff-app/providers/utils"
+import { Person } from "shared/models/person"
 
 export const ActivityPage: React.FC = () => {
   const [getActivities, data, loadState] = useApi<{ activity: any[] }>({ url: "get-activities" })
@@ -57,7 +60,7 @@ export const ActivityPage: React.FC = () => {
               <S.Date>Completed At: {formatDateTime(a.entity.completed_at)}</S.Date>
             </S.Info>
 
-            <S.Button onClick={(e) => handleDetailButtonClick(e, { rollData: a.entity.student_roll_states, header: "Attendance" })}>
+            <S.Button onClick={(e) => handleDetailButtonClick(e, { rollData: a.entity.student_roll_states, header: "attendance" })}>
               <FontAwesomeIcon icon={faCaretDown} />
             </S.Button>
           </S.Details>
@@ -108,27 +111,61 @@ type Props = {
   onClose: any
 }
 const Modal: React.FC<Props> = ({ data, onClose }) => {
+  const [getStudents, list, loadState] = useApi<{ students: Person[] }>({ url: "get-homeboard-students" })
+
+  useEffect(() => {
+    if (data.header === "attendance") getStudents()
+  }, [getStudents])
+
+  const processData = (data: any) => {
+    switch (data.header) {
+      case "attendance":
+        if (loadState === "loaded" && list) {
+          const markedData = markAttendance(list.students, data.rollData)
+        }
+    }
+  }
+
   return (
     <S.Modal>
       <S.ModalContainer>
         <S.ModalHeader>
-          <S.ModalTitle>{data.header}</S.ModalTitle>
+          <S.ModalTitle>{toTitleCase(data.header)}</S.ModalTitle>
+          {data.header === "attendance" && loadState === "loaded" ? (
+            <RollStateList
+              stateList={[
+                { type: "all", count: 0 },
+                { type: "present", count: 0 },
+                { type: "late", count: 0 },
+                { type: "absent", count: 0 },
+              ]}
+              onItemClick={() => console.log("item-click")}
+            />
+          ) : null}
           <S.ModalCloseButton onClick={onClose}>
             <FontAwesomeIcon icon={faWindowClose} />
           </S.ModalCloseButton>
         </S.ModalHeader>
-        <S.RollItem>
-          <S.RollItemId type={"header"}>ID</S.RollItemId>
-          <S.RollItemState state={"header"}>State</S.RollItemState>
-        </S.RollItem>
-        <div style={{ overflowY: "auto" }}>
-          {data.rollData.map((e: any) => (
+        {data.header === "attendance" && loadState === "loaded" ? (
+          <>
             <S.RollItem>
-              <S.RollItemId type={"item"}>{e.student_id}</S.RollItemId>
-              <S.RollItemState state={e.roll_state}>{e.roll_state[0].toUpperCase() + e.roll_state.slice(1)}</S.RollItemState>
+              <S.RollItemId type={"header"}>ID</S.RollItemId>
+              <S.RollItemState state={"header"}>State</S.RollItemState>
             </S.RollItem>
-          ))}
-        </div>
+            <div style={{ overflowY: "auto" }}>
+              {data.rollData.map((e: any) => (
+                <S.RollItem>
+                  <S.RollItemId type={"item"}>{e.student_id}</S.RollItemId>
+                  <S.RollItemState state={e.roll_state}>{e.roll_state[0].toUpperCase() + e.roll_state.slice(1)}</S.RollItemState>
+                </S.RollItem>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div style={{ marginTop: "3rem" }}>
+            <FontAwesomeIcon icon="spinner" size="2x" spin />
+          </div>
+        )}
       </S.ModalContainer>
     </S.Modal>
   )
@@ -138,7 +175,7 @@ const S = {
   PageContainer: styled.div`
     display: flex;
     flex-direction: column;
-    width: 50%;
+    width: 40%;
     margin: ${Spacing.u4} auto 140px;
   `,
   ToolbarContainer: styled.div`
@@ -267,7 +304,8 @@ const S = {
   ModalContainer: styled.div`
     display: flex;
     align-items: center;
-    width: 18rem;
+    width: 40%;
+    min-height: 10rem;
     max-height: 25rem;
     overflow-y: auto;
     flex-direction: column;

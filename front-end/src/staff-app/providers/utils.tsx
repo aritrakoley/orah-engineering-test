@@ -1,5 +1,5 @@
 import { Person } from "shared/models/person"
-import { RolllStateType } from "shared/models/roll"
+import { RollInput, RolllStateType } from "shared/models/roll"
 
 export type SortOptionsType = {
   asc: boolean
@@ -67,3 +67,12 @@ export const getRollSummary = (list: Person[]) => {
   }
   return summary
 }
+
+export const markAttendance = (list: Person[], roll: any[]) => {
+  return list
+  const rollMap = new Map()
+  // for (const s of roll )
+  //   rollMap.set(s.student_id)
+}
+
+export const toTitleCase = (s: string) => s[0].toUpperCase() + s.slice(1)
