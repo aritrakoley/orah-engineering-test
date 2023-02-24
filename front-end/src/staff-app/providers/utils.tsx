@@ -35,3 +35,27 @@ const filterStudents = (list: Person[], filterOptions: FilterOptionsType) => {
 export const getListToDisplay = (list: Person[], sortOptions: SortOptionsType, filterOptions: FilterOptionsType) => {
   return sortStudents(filterStudents(list, filterOptions), sortOptions)
 }
+
+export const getRollSummary = (list: Person[]) => {
+  const summary = [
+    { type: "all", count: list.length },
+    { type: "present", count: 0 },
+    { type: "late", count: 0 },
+    { type: "absent", count: 0 },
+  ]
+
+  for (const s of list) {
+    switch (s.rollState) {
+      case "present":
+        summary[1].count++
+        break
+      case "late":
+        summary[2].count++
+        break
+      case "absent":
+        summary[3].count++
+        break
+    }
+  }
+  return summary
+}

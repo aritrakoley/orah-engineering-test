@@ -5,13 +5,13 @@ import { RollStateIcon } from "staff-app/components/roll-state/roll-state-icon.c
 import { Spacing, FontWeight } from "shared/styles/styles"
 import { Roll, RolllStateType } from "shared/models/roll"
 import { RollContext } from "staff-app/providers/RollProvider"
+import { getRollSummary } from "staff-app/providers/utils"
 
 interface Props {
-  stateList: StateList[]
   onItemClick?: (type: ItemType) => void
   size?: number
 }
-export const RollStateList: React.FC<Props> = ({ stateList, size = 14, onItemClick }) => {
+export const RollStateList: React.FC<Props> = ({ size = 14, onItemClick }) => {
   const { state, dispatch } = useContext(RollContext)
   const onClick = (type: ItemType) => {
     if (onItemClick) {
@@ -21,39 +21,17 @@ export const RollStateList: React.FC<Props> = ({ stateList, size = 14, onItemCli
     }
   }
 
-  const getRollSummary = (rollMap: Map<number, RolllStateType>) => {
-    const summary = [
-      { type: "all", count: state.rollOptions.rollMap.size },
-      { type: "present", count: 0 },
-      { type: "late", count: 0 },
-      { type: "absent", count: 0 },
-    ]
-
-    rollMap.forEach((val, key) => {
-      switch (val) {
-        case "present":
-          summary[1].count++
-          break
-        case "late":
-          summary[2].count++
-          break
-        case "absent":
-          summary[3].count++
-          break
-      }
-    })
-
-    return summary
-  }
-
+  const summary = getRollSummary(state.studentList)
   return (
     <S.ListContainer>
-      {getRollSummary(state.rollOptions.rollMap).map((s, i) => {
+      {summary.map((s, i) => {
         if (s.type === "all") {
           return (
             <S.ListItem key={i}>
               <FontAwesomeIcon icon="users" size="sm" style={{ cursor: "pointer" }} onClick={() => onClick(s.type as RolllStateType)} />
-              <span>{s.count}</span>
+              <span>
+                {summary[1].count + summary[2].count + summary[3].count} / {s.count}
+              </span>
             </S.ListItem>
           )
         }
