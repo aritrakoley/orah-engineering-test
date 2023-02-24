@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useContext } from "react"
+import React, { useEffect, useContext, useState } from "react"
 import styled from "styled-components"
 import Button from "@material-ui/core/ButtonBase"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
@@ -11,11 +11,13 @@ import { useApi } from "shared/hooks/use-api"
 import { StudentListTile } from "staff-app/components/student-list-tile/student-list-tile.component"
 import { ActiveRollOverlay, ActiveRollAction } from "staff-app/components/active-roll-overlay/active-roll-overlay.component"
 import { RollContext } from "staff-app/providers/RollProvider"
+import { getListToDisplay } from "../providers/utils"
 
 export const HomeBoardPage: React.FC = () => {
   const [getStudents, data, loadState] = useApi<{ students: Person[] }>({ url: "get-homeboard-students" })
 
   const { state, dispatch } = useContext(RollContext)
+  const [displayList, setDisplayList] = useState<Person[]>([])
 
   useEffect(() => {
     void getStudents()
@@ -23,7 +25,11 @@ export const HomeBoardPage: React.FC = () => {
 
   useEffect(() => {
     if (data && data.students) dispatch({ type: "update", payload: data.students })
-  }, [data, state.sortOptions, state.filterOptions, state.rollOptions])
+  }, [data])
+
+  useEffect(() => {
+    setDisplayList(getListToDisplay(state.studentList, state.sortOptions, state.filterOptions))
+  }, [state.studentList, state.sortOptions, state.filterOptions])
 
   const onActiveRollAction = (action: ActiveRollAction) => {
     if (action === "exit") {
@@ -43,12 +49,18 @@ export const HomeBoardPage: React.FC = () => {
           </CenteredContainer>
         )}
 
-        {loadState === "loaded" && state.studentList && (
+        {loadState === "loaded" && displayList && (
           <>
-            {state.studentList.map((s: any) => (
+            {displayList.map((s: Person) => (
               <StudentListTile key={s.id} student={s} />
             ))}
           </>
+        )}
+
+        {loadState === "loaded" && displayList.length === 0 && (
+          <CenteredContainer>
+            <div>No students to display</div>
+          </CenteredContainer>
         )}
 
         {loadState === "error" && (
