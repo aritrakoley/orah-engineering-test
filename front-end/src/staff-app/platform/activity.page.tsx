@@ -5,7 +5,6 @@ import { Colors } from "shared/styles/colors"
 import { faCaretDown, faClipboardList, faExclamation, faWindowClose } from "@fortawesome/free-solid-svg-icons"
 import { Spacing, BorderRadius, FontWeight } from "shared/styles/styles"
 import Button from "@material-ui/core/ButtonBase"
-import { Images } from "assets/images"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { CenteredContainer } from "shared/components/centered-container/centered-container.component"
 
@@ -28,16 +27,16 @@ export const ActivityPage: React.FC = () => {
   }
 
   const formatDateTime = (date: string) => {
-    const dt = new Date(date)
-    let dd = dt.getDate() + ""
-    let mm = (dt.getMonth() + 1).toString()
-    let yyyy = dt.getFullYear()
-    dd = parseInt(dd) < 10 ? "0" + dd : "" + dd
-    mm = parseInt(mm) < 10 ? "0" + mm : "" + mm
+    const f = (x: number) => (x < 10 ? "0" + x : "" + x)
 
-    let h = dt.getHours()
-    let m = dt.getMinutes()
-    let s = dt.getSeconds()
+    const dt = new Date(date)
+    let dd = f(dt.getDate())
+    let mm = f(dt.getMonth() + 1)
+    let yyyy = dt.getFullYear()
+
+    let h = f(dt.getHours())
+    let m = f(dt.getMinutes())
+    let s = f(dt.getSeconds())
 
     return `${dd}-${mm}-${yyyy} ${h}:${m}:${s}`
   }
@@ -178,7 +177,6 @@ const S = {
     background-color: #fff;
     box-shadow: 0 2px 7px rgba(5, 66, 145, 0.13);
     transition: box-shadow 0.3s ease-in-out;
-
     &:hover {
       box-shadow: 0 2px 7px rgba(5, 66, 145, 0.26);
     }
@@ -247,7 +245,6 @@ const S = {
   Name: styled.div`
     flex-grow: 1;
     margin-bottom: 5px;
-    margin-top: 5px;
     color: ${Colors.dark.base};
     font-size: 1.2rem;
     font-weight: ${FontWeight.strong};
