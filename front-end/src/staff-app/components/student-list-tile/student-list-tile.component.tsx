@@ -10,11 +10,12 @@ import { RollContext } from "staff-app/providers/RollProvider"
 
 interface Props {
   student: any
+  readOnly: boolean
 }
-export const StudentListTile: React.FC<Props> = ({ student }) => {
+export const StudentListTile: React.FC<Props> = ({ student, readOnly }) => {
   const { state, dispatch } = useContext(RollContext)
 
-  const markAttendance = (rollState: RolllStateType) => {
+  const mark = (rollState: RolllStateType) => {
     dispatch({ type: "mark", payload: { id: student.id, rollState } })
   }
 
@@ -24,9 +25,9 @@ export const StudentListTile: React.FC<Props> = ({ student }) => {
       <S.Content>
         <div>{PersonHelper.getFullName(student)}</div>
       </S.Content>
-      {state.rollOptions.isRollMode && (
+      {(state.isRollMode || readOnly) && (
         <S.Roll>
-          <RollStateSwitcher initialState={student.rollState} onStateChange={markAttendance} />
+          <RollStateSwitcher initialState={student.rollState} onStateChange={readOnly ? undefined : mark} />
         </S.Roll>
       )}
     </S.Container>

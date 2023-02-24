@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useContext } from "react"
+import React, { useEffect, useContext, useState } from "react"
 import styled from "styled-components"
 import Button from "@material-ui/core/ButtonBase"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
@@ -9,13 +9,15 @@ import { CenteredContainer } from "shared/components/centered-container/centered
 import { Person } from "shared/models/person"
 import { useApi } from "shared/hooks/use-api"
 import { StudentListTile } from "staff-app/components/student-list-tile/student-list-tile.component"
-import { ActiveRollOverlay, ActiveRollAction } from "staff-app/components/active-roll-overlay/active-roll-overlay.component"
+import { ActiveRollOverlay /*ActiveRollAction*/ } from "staff-app/components/active-roll-overlay/active-roll-overlay.component"
 import { RollContext } from "staff-app/providers/RollProvider"
+import { getListToDisplay } from "../providers/utils"
 
 export const HomeBoardPage: React.FC = () => {
   const [getStudents, data, loadState] = useApi<{ students: Person[] }>({ url: "get-homeboard-students" })
 
   const { state, dispatch } = useContext(RollContext)
+  const [displayList, setDisplayList] = useState<Person[]>([])
 
   useEffect(() => {
     void getStudents()
@@ -23,13 +25,17 @@ export const HomeBoardPage: React.FC = () => {
 
   useEffect(() => {
     if (data && data.students) dispatch({ type: "update", payload: data.students })
-  }, [data, state.sortOptions, state.filterOptions, state.rollOptions])
+  }, [data])
 
-  const onActiveRollAction = (action: ActiveRollAction) => {
-    if (action === "exit") {
-      dispatch({ type: "roll", payload: { isRollMode: false } })
-    }
-  }
+  useEffect(() => {
+    setDisplayList(getListToDisplay(state.studentList, state.sortOptions, state.filterOptions))
+  }, [state.studentList, state.sortOptions, state.filterOptions])
+
+  // const onActiveRollAction = (action: ActiveRollAction) => {
+  //   if (action === "exit") {
+  //     dispatch({ type: "roll", payload: { isRollMode: false } })
+  //   }
+  // }
 
   console.log(state)
   return (
@@ -43,12 +49,18 @@ export const HomeBoardPage: React.FC = () => {
           </CenteredContainer>
         )}
 
-        {loadState === "loaded" && state.studentList && (
+        {loadState === "loaded" && displayList && (
           <>
-            {state.studentList.map((s: any) => (
+            {displayList.map((s: Person) => (
               <StudentListTile key={s.id} student={s} />
             ))}
           </>
+        )}
+
+        {loadState === "loaded" && displayList.length === 0 && (
+          <CenteredContainer>
+            <div>No students to display</div>
+          </CenteredContainer>
         )}
 
         {loadState === "error" && (
@@ -57,7 +69,7 @@ export const HomeBoardPage: React.FC = () => {
           </CenteredContainer>
         )}
       </S.PageContainer>
-      <ActiveRollOverlay isActive={state.rollOptions.isRollMode} onItemClick={onActiveRollAction} />
+      <ActiveRollOverlay isActive={state.isRollMode} /*onItemClick={onActiveRollAction}*/ />
     </>
   )
 }
@@ -77,7 +89,7 @@ const Toolbar: React.FC = () => {
       <div>
         <S.TextInput placeholder="Search" value={state.filterOptions.name} onChange={(e) => dispatch({ type: "search", payload: { name: e.target.value } })} />
       </div>
-      <S.Button onClick={() => dispatch({ type: "roll", payload: { isRollMode: true } })}>Start Roll</S.Button>
+      <S.Button onClick={() => dispatch({ type: "roll", payload: true })}>Start Roll</S.Button>
     </S.ToolbarContainer>
   )
 }
