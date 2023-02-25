@@ -10,9 +10,9 @@ import { RollContext } from "staff-app/providers/RollProvider"
 
 interface Props {
   student: any
-  readOnly: boolean
+  readOnly?: boolean
 }
-export const StudentListTile: React.FC<Props> = ({ student, readOnly }) => {
+export const StudentListTile: React.FC<Props> = ({ student, readOnly = false }) => {
   const { state, dispatch } = useContext(RollContext)
 
   const mark = (rollState: RolllStateType) => {
@@ -27,7 +27,7 @@ export const StudentListTile: React.FC<Props> = ({ student, readOnly }) => {
       </S.Content>
       {(state.isRollMode || readOnly) && (
         <S.Roll>
-          <RollStateSwitcher initialState={student.rollState} onStateChange={readOnly ? undefined : mark} />
+          <RollStateSwitcher initialState={student.rollState} readOnly={readOnly} onStateChange={mark} />
         </S.Roll>
       )}
     </S.Container>

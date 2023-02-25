@@ -5,9 +5,10 @@ import { RollStateIcon } from "staff-app/components/roll-state/roll-state-icon.c
 interface Props {
   initialState?: RolllStateType
   size?: number
+  readOnly?: boolean
   onStateChange?: (newState: RolllStateType) => void
 }
-export const RollStateSwitcher: React.FC<Props> = ({ initialState = "unmark", size = 40, onStateChange }) => {
+export const RollStateSwitcher: React.FC<Props> = ({ initialState = "unmark", size = 40, readOnly, onStateChange }) => {
   const [rollState, setRollState] = useState(initialState)
 
   const nextState = () => {
@@ -18,6 +19,8 @@ export const RollStateSwitcher: React.FC<Props> = ({ initialState = "unmark", si
   }
 
   const onClick = () => {
+    if (readOnly) return
+
     const next = nextState()
     setRollState(next)
     if (onStateChange) {
