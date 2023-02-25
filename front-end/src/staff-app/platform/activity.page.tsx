@@ -301,7 +301,7 @@ const S = {
     flex-direction: column;
     align-items: center;
     width: 40%;
-    height: 25rem;
+    height: 80%;
     overflow-y: auto;
     border-radius: 10px;
     background-color: #fff;
